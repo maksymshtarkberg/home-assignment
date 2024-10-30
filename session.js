@@ -10,6 +10,7 @@ export async function handleAuth(req, res) {
 	}
 
 	const session = await shopify.api.session.getCurrentId({
+		isOnline: true,
 		rawRequest: req,
 		rawResponse: res,
 	});

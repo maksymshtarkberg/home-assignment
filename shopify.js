@@ -1,6 +1,8 @@
 import { ApiVersion } from '@shopify/shopify-api';
 import { shopifyApp } from '@shopify/shopify-app-express';
-import { PrismaSessionStorage } from './prisma/storage.js';
+// import { PrismaSessionStorage } from './prisma/storage.js';
+import { PrismaSessionStorage } from '@shopify/shopify-app-session-storage-prisma';
+
 import { restResources } from '@shopify/shopify-api/rest/admin/2023-10';
 import prisma from './prisma/index.js';
 import dotenv from 'dotenv';
@@ -8,6 +10,8 @@ dotenv.config();
 
 const shopify = shopifyApp({
 	api: {
+		apiKey: process.env.SHOPIFY_API_KEY,
+		apiSecretKey: process.env.SHOPIFY_API_SECRET,
 		apiVersion: ApiVersion.October23,
 		restResources,
 	},
