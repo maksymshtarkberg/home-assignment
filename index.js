@@ -45,8 +45,6 @@ Route for checkout request
 */
 app.post('/api/save-cart', async (req, res) => {
 	const { customer_id, variant_ids } = req.body;
-	console.log('HERE customerId', customer_id);
-	console.log('HERE variant_ids', variant_ids);
 
 	if (!customer_id || !variant_ids) {
 		return res.status(400).json({ error: 'Parameters is required' });
@@ -70,48 +68,29 @@ app.post('/api/save-cart', async (req, res) => {
 /*
 Route for request from liquid component
 */
-app.post('/api/save-cart-proxy', async (req, res) => {
+app.get('/api/retrieve-cart-proxy', async (req, res) => {
+	const { customer_id } = req.query;
+
+	if (!customer_id) {
+		return res.status(400).json({ error: 'Customer ID is required' });
+	}
+
 	try {
-		console.log('Incoming request body:', req.body);
+		const [rows] = await db.execute(`SELECT cart_data FROM saved_carts WHERE customer_id = ?`, [
+			customer_id,
+		]);
 
-		const { customer_id, variant_ids } = req.body;
-
-		if (!customer_id || !Array.isArray(variant_ids)) {
-			return res.status(400).json({ message: 'Customer ID and variant IDs are required' });
+		if (rows.length === 0) {
+			return res.status(404).json({ message: 'Cart not found' });
 		}
 
-		let formData = {
-			items: variant_ids.map((id) => ({
-				id: id,
-				quantity: 1,
-			})),
-		};
-
-		const itemsToAdd = variant_ids.map((id) => ({ id, quantity: 1 }));
-
-		const response = await fetch('https://home-assignment-96.myshopify.com/cart/add.js', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(formData),
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			console.error('Error response from Shopify:', errorText);
-			throw new Error('Failed to add items to the cart');
-		}
-
-		const result = await response.json();
-		console.log('Cart updated successfully:', result);
-		res.status(200).json({ message: 'Cart saved successfully', cart: result });
+		const cartData = rows[0].cart_data;
+		res.status(200).json({ cart: cartData });
 	} catch (error) {
-		console.error('Error saving cart:', error);
-		res.status(500).json({ message: 'Error saving cart' });
+		console.error('Error retrieving cart:', error);
+		res.status(500).json({ message: 'Error retrieving cart' });
 	}
 });
-
 /*
 Test routes for getting user data
 */
